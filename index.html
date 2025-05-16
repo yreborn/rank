@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>校花排行榜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            background-color: #0a0e17;
+            color: #e4e6eb;
+            line-height: 1.6;
+        }
+        .app {
+            max-width: 100%;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            padding: 20px 15px;
+            position: relative;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="none" width="100" height="100"/><path d="M0,0 L100,100 M20,0 L100,80 M40,0 L100,60 M60,0 L100,40 M80,0 L100,20 M0,20 L80,100 M0,40 L60,100 M0,60 L40,100 M0,80 L20,100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .search-container {
+            padding: 15px;
+            background-color: #141b29;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 0 15px;
+            height: 46px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        .search-box:focus-within {
+            border-color: #fdbb2d;
+            box-shadow: 0 0 0 2px rgba(253,187,45,0.3);
+        }
+        .search-icon {
+            color: #e4e6eb;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #e4e6eb;
+            outline: none;
+        }
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .ranking-list {
+            padding: 15px;
+        }
+        .candidate-card {
+            background-color: #1c2333;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            z-index: 10;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .rank-1 {
+            background: linear-gradient(135deg, #ffd700, #ff9500);
+            box-shadow: 0 0 15px rgba(255,215,0,0.5);
+        }
+        .rank-2 {
+            background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+            box-shadow: 0 0 15px rgba(192,192,192,0.5);
+        }
+        .rank-3 {
+            background: linear-gradient(135deg, #cd7f32, #a05a2c);
+            box-shadow: 0 0 15px rgba(205,127,50,0.5);
+        }
+        .candidate-image-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .candidate-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s;
+        }
+        .candidate-image-container:hover .candidate-image {
+            transform: scale(1.05);
+        }
+        .candidate-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%);
+        }
+        .candidate-info {
+            padding: 20px;
+            position: relative;
+        }
+        .candidate-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .candidate-details {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+        }
+        .detail-item {
+            margin-right: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            background-color: rgba(255,255,255,0.05);
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+        .detail-icon {
+            margin-right: 5px;
+        }
+        .vote-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .vote-count {
+            font-size: 18px;
+            font-weight: 500;
+            color: #fdbb2d;
+            display: flex;
+            align-items: center;
+        }
+        .vote-count-icon {
+            margin-right: 8px;
+            font-size: 20px;
+        }
+        .vote-btn {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .vote-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+        .add-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .add-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 2000;
+            overflow-y: auto;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background-color: #1c2333;
+            border-radius: 12px;
+            margin: 20px;
+            max-width: 500px;
+            position: relative;
+            margin: 10% auto;
+            animation: fadeIn 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fdbb2d;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .close-btn:hover {
+            color: white;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.8);
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: rgba(255,255,255,0.05);
+            color: white;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #fdbb2d;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(253,187,45,0.3);
+        }
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.5);
+        }
+        .empty-state-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        /* 适配小屏幕 */
+        @media (max-width: 360px) {
+            .candidate-name {
+                font-size: 18px;
+            }
+            .candidate-details {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="header-content">
+                <h1>校花排行榜</h1>
+                <p>为你心目中的校花投票吧！</p>
+            </div>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="search-input" placeholder="搜索姓名、班级或学院..." oninput="searchCandidates()">
+            </div>
+        </div>
+        
+        <div class="ranking-list" id="ranking-list">
+            <!-- 排行榜内容将在这里动态生成 -->
+        </div>
+        
+        <button class="add-btn" onclick="openAddModal()">+</button>
+        
+        <!-- 添加候选人弹窗 -->
+        <div id="add-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title">添加候选人</div>
+                    <button class="close-btn" onclick="closeAddModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="input-name">姓名</label>
+                        <input type="text" id="input-name" class="form-control" placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-avatar">头像URL</label>
+                        <input type="text" id="input-avatar" class="form-control" placeholder="请输入头像图片链接">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-class">班级</label>
+                        <input type="text" id="input-class" class="form-control" placeholder="请输入班级">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-college">学院</label>
+                        <input type="text" id="input-college" class="form-control" placeholder="请输入学院">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-age">年龄</label>
+                        <input type="number" id="input-age" class="form-control" placeholder="请输入年龄">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="input-zodiac">星座</label>
+                        <input type="text" id="input-zodiac" class="form-control" placeholder="请输入星座">
+                    </div>
+                    <button class="btn-submit" onclick="addCandidate()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从localStorage获取候选人列表
+        let candidates = JSON.parse(localStorage.getItem('beautyRanking')) || [
+            {
+                id: 1,
+                name: "李梦",
+                avatar: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                class: "计算机科学 2班",
+                college: "信息工程学院",
+                age: 20,
+                zodiac: "天秤座",
+                votes: 42
+            },
+            {
+                id: 2,
+                name: "张雪",
+                avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                class: "金融 1班",
+                college: "经济管理学院",
+                age: 19,
+                zodiac: "双子座",
+                votes: 38
+            },
+            {
+                id: 3,
+                name: "王琳",
+                avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                class: "英语 3班",
+                college: "外国语学院",
+                age: 21,
+                zodiac: "射手座",
+                votes: 35
+            }
+        ];
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            renderRanking();
+        };
+        
+        // 渲染排行榜
+        function renderRanking(filteredCandidates = null) {
+            const container = document.getElementById('ranking-list');
+            
+            // 使用过滤后的列表或原始列表
+            const candidatesToRender = filteredCandidates || candidates;
+            
+            // 按票数排序
+            const sortedCandidates = [...candidatesToRender].sort((a, b) => b.votes - a.votes);
+            
+            if (sortedCandidates.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👑</div>
+                        <div>暂无候选人，点击右下角添加</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            sortedCandidates.forEach((candidate, index) => {
+                const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                
+                const candidateElement = document.createElement('div');
+                candidateElement.className = 'candidate-card';
+                
+                candidateElement.innerHTML = `
+                    <div class="rank-badge ${rankClass}">${index + 1}</div>
+                    <div class="candidate-image-container">
+                        <img src="${candidate.avatar}" alt="${candidate.name}" class="candidate-image" onerror="this.src='https://via.placeholder.com/400x200?text=无法加载图片'">
+                        <div class="candidate-image-overlay"></div>
+                    </div>
+                    <div class="candidate-info">
+                        <div class="candidate-name">
+                            <span>${candidate.name}</span>
+                        </div>
+                        <div class="candidate-details">
+                            <div class="detail-item">
+                                <span class="detail-icon">🏫</span>
+                                <span>${candidate.college}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">👩‍🎓</span>
+                                <span>${candidate.class}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">🎂</span>
+                                <span>${candidate.age}岁</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-icon">✨</span>
+                                <span>${candidate.zodiac}</span>
+                            </div>
+                        </div>
+                        <div class="vote-section">
+                            <div class="vote-count">
+                                <span class="vote-count-icon">🏆</span>
+                                <span>${candidate.votes} 票</span>
+                            </div>
+                            <button class="vote-btn" onclick="voteForCandidate(${candidate.id})">投票</button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(candidateElement);
+            });
+        }
+        
+        // 搜索候选人
+        function searchCandidates() {
+            const searchText = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            if (!searchText) {
+                renderRanking();
+                return;
+            }
+            
+            const filtered = candidates.filter(candidate => 
+                candidate.name.toLowerCase().includes(searchText) || 
+                candidate.class.toLowerCase().includes(searchText) || 
+                candidate.college.toLowerCase().includes(searchText)
+            );
+            
+            renderRanking(filtered);
+        }
+        
+        // 为候选人投票
+        function voteForCandidate(candidateId) {
+            const candidate = candidates.find(c => c.id === candidateId);
+            if (candidate) {
+                candidate.votes += 1;
+                saveAndRender();
+                
+                // 创建一个浮动的投票动画
+                const voteAnimation = document.createElement('div');
+                voteAnimation.textContent = '+1';
+                voteAnimation.style.position = 'fixed';
+                voteAnimation.style.color = '#fdbb2d';
+                voteAnimation.style.fontWeight = 'bold';
+                voteAnimation.style.fontSize = '24px';
+                voteAnimation.style.pointerEvents = 'none';
+                voteAnimation.style.zIndex = '9999';
+                voteAnimation.style.transition = 'all 1s ease-out';
+                
+                // 获取点击位置
+                const event = window.event;
+                voteAnimation.style.left = `${event.clientX - 10}px`;
+                voteAnimation.style.top = `${event.clientY - 20}px`;
+                
+                document.body.appendChild(voteAnimation);
+                
+                // 动画效果
+                setTimeout(() => {
+                    voteAnimation.style.transform = 'translateY(-50px)';
+                    voteAnimation.style.opacity = '0';
+                }, 50);
+                
+                // 移除元素
+                setTimeout(() => {
+                    document.body.removeChild(voteAnimation);
+                }, 1000);
+            }
+        }
+        
+        // 打开添加候选人弹窗
+        function openAddModal() {
+            document.getElementById('add-modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 关闭添加候选人弹窗
+        function closeAddModal() {
+            document.getElementById('add-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            
+            // 清空表单
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-avatar').value = '';
+            document.getElementById('input-class').value = '';
+            document.getElementById('input-college').value = '';
+            document.getElementById('input-age').value = '';
+            document.getElementById('input-zodiac').value = '';
+        }
+        
+        // 添加候选人
+        function addCandidate() {
+            const name = document.getElementById('input-name').value.trim();
+            const avatar = document.getElementById('input-avatar').value.trim();
+            const className = document.getElementById('input-class').value.trim();
+            const college = document.getElementById('input-college').value.trim();
+            const age = parseInt(document.getElementById('input-age').value);
+            const zodiac = document.getElementById('input-zodiac').value.trim();
+            
+            if (!name || !college) {
+                alert('请至少填写姓名和学院！');
+                return;
+            }
+            
+            const newCandidate = {
+                id: Date.now(),
+                name: name,
+                avatar: avatar || 'https://via.placeholder.com/400x200?text=无头像',
+                class: className,
+                college: college,
+                age: age || 20,
+                zodiac: zodiac || '未知',
+                votes: 0
+            };
+            
+            candidates.push(newCandidate);
+            saveAndRender();
+            closeAddModal();
+            
+            // 清空搜索框
+            document.getElementById('search-input').value = '';
+            
+            alert('候选人添加成功！');
+        }
+        
+        // 保存数据并重新渲染
+        function saveAndRender() {
+            localStorage.setItem('beautyRanking', JSON.stringify(candidates));
+            
+            // 检查是否有搜索文本
+            const searchText = document.getElementById('search-input').value.toLowerCase().trim();
+            if (searchText) {
+                searchCandidates();
+            } else {
+                renderRanking();
+            }
+        }
+        
+        // 关闭弹窗的其他方式
+        window.onclick = function(event) {
+            const modal = document.getElementById('add-modal');
+            if (event.target === modal) {
+                closeAddModal();
+            }
+        };
+    </script>
+</body>
+</html>
